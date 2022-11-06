@@ -179,5 +179,10 @@ Tensor repeat_mps(const Tensor& self, IntArrayRef repeats) {
 
 }
 
+Tensor reapeat_interleave_mps(const Tensor& self, IntArrayRef repeats)
+  using namespace mps;
+
+  
+  return output;
 }
 }
