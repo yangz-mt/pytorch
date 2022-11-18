@@ -24,27 +24,26 @@
 #endif
 
 template <typename index_t>
-kernel void compute_mps_kernel(device int64_t* _repeat_ptr,
-    	device int64_t* _cumsum_ptr,
-    	device index_t* _result_ptr,
-      int64_t idx [[thread_position_in_grid]])
+kernel void compute_mps_kernel(at::mps:device int64_t* _repeat_ptr,
+    	at::mps:device int64_t* _cumsum_ptr,
+    	at::mps:device index_t* _result_ptr,
+      uint idx [[thread_position_in_grid]])
     {
-    	using namespace at::mps;
 
-
+      using namespace mps;
 
     	int64_t stride = (threadGroupSize * block) / C10_WARP_SIZE;
     	int warp_id = idx / C10_WARP_SIZE;
     	int tid_in_warp = idx % C10_WARP_SIZE;
     	for (int64_t i = warp_id; i < size; i += stride)
     	{
-    		int64_t end = cumsum_ptr[i];
-    		index_t repeat = repeat_ptr[i];
+    		int64_t end = _cumsum_ptr[i];
+    		index_t repeat = _repeat_ptr[i];
     		for (int64_t j = start + tid_in_warp; j < end; j += C10_WARP_SIZE)
     		{
     			result_ptr[j] = i;
     		}
-    		}
+    	}
     }
 
 template <typename index_t>
@@ -59,7 +58,7 @@ void compute_mps(index_t* repeat_ptr,
             int64_t block = 512;
     			  int64_t warps_per_block = block / C10_WARP_SIZE;
 
-    			  NSUInteger threadGroupSize = ((size + warps_per_block - 1) / warps_per_block, 2048);
+    			  NSUInteger threadGroupSize = ((size + warps_per_block - 1) / warps_per_block);
     			  if (threadGroupSize > 2048)
     			  {
     				  threadGroupSize = 2048;
@@ -69,7 +68,7 @@ void compute_mps(index_t* repeat_ptr,
   id<MTLDevice> device = MPSDevice::getInstance()->device();
 
 dispatch_sync(mpsStream->queue(), ^(){
-
+@autoreleasepool {
   NSError* error = nil;
 
 
@@ -83,8 +82,8 @@ dispatch_sync(mpsStream->queue(), ^(){
   id<MTLBuffer> _cumsum_ptr = [device newBufferWithLength:size options:MTLResourceStorageModeShared];
   id<MTLBuffer> _result_ptr = [device newBufferWithLength:result_size options:MTLResourceStorageModeShared];
 
-  _repeat_ptr = repeat_ptr;
-  _cumsum_ptr = cumsum_ptr;
+  _repeat_ptr.contents = repeat_ptr;
+  _cumsum_ptr.contents = cumsum_ptr;
 
   [computeEncoder setComputePipelineState:_mAddFunctionPSO];
   [computeEncoder setBuffer:_repeat_ptr offset:0 atIndex:0];
@@ -97,12 +96,9 @@ dispatch_sync(mpsStream->queue(), ^(){
   [computeEncoder endEncoding];
 
   mpsStream->commit(true);
+  
+  result_ptr = _result_ptr.contents;
 
-  - (void) outputResults
-  {
-    index_t* result = _result_ptr.contents;
-
-    result_ptr = result
 }
 })
 }
@@ -172,6 +168,10 @@ void set_apparent_shapes(NSArray<NSNumber*> * input_shape,
   }
 
 }
+
+
+
+
 
 Tensor repeat_mps(const Tensor& self, IntArrayRef repeats) {
 
@@ -274,10 +274,12 @@ Tensor repeat_mps(const Tensor& self, IntArrayRef repeats) {
 
 }
 
+
+
 Tensor repeat_interleave_mps(const Tensor& repeats,c10::optional<int64_t> output_size) {
   Tensor output;
   AT_DISPATCH_INDEX_TYPES(
-      repeat.scalar_type(), "repeat_interleave_cuda", [&]() {
+      repeats.scalar_type(), "repeat_interleave_mps", [&]() {
         output = repeat_interleave_common<index_t, compute_mps<index_t>>(
             repeat, output_size);
       });
