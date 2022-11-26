@@ -137,6 +137,8 @@ class GuardBuilder(GuardBuilderBase):
         # TODO: tf is this naming
         self.guarded_code: CheckFunctionManager = guarded_code
 
+        self.shape_env_fn = None
+
     # Warning: use this with care!  This lets you access what the current
     # value of the value you are guarding on is.  You probably don't want
     # to actually durably save this value though (because it's specific
@@ -406,7 +408,8 @@ class GuardBuilder(GuardBuilderBase):
             source_ref=self.source_ref,
         )
         if code != "True":
-            self._produce_guard_code(guard, [code], shape_env=True)
+            self.shape_env_fn = code.fn
+            self._produce_guard_code(guard, [code.call_expr], shape_env=True)
 
     def TENSOR_MATCH(self, guard: Guard):
         if guard.is_nn_module():
@@ -636,6 +639,7 @@ class CheckFunctionManager:
                 ("___guarded_code", self),
                 ("___check_tensors", check_tensors_fn),
                 ("___check_tensors_verbose", check_tensors_verbose_fn),
+                ("___symbolic_shape_fn", local_builder.shape_env_fn),
                 ("tensor_check_names", tensor_check_names),
                 ("floor", math.floor),
                 ("ceiling", math.ceil),
