@@ -1019,7 +1019,7 @@ include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
 if(BUILD_PYTHON)
   find_package(Python COMPONENTS Interpreter Development OPTIONAL_COMPONENTS NumPy)
   # If not given a Python installation, then use the current active Python
-  if(NOT PYTHON_EXECUTABLE)
+  if(NOT Python_FOUND)
     execute_process(
       COMMAND "which" "python" RESULT_VARIABLE _exitcode OUTPUT_VARIABLE _py_exe)
     if(${_exitcode} EQUAL 0)
