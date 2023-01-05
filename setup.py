@@ -290,20 +290,6 @@ lib_path = os.path.join(cwd, "torch", "lib")
 third_party_path = os.path.join(cwd, "third_party")
 caffe2_build_dir = os.path.join(cwd, "build")
 
-# CMAKE: full path to python library
-if IS_WINDOWS:
-    cmake_python_library = "{}/libs/python{}.lib".format(
-        sysconfig.get_config_var("prefix"),
-        sysconfig.get_config_var("VERSION"))
-    # Fix virtualenv builds
-    if not os.path.exists(cmake_python_library):
-        cmake_python_library = "{}/libs/python{}.lib".format(
-            sys.base_prefix,
-            sysconfig.get_config_var("VERSION"))
-else:
-    cmake_python_library = "{}/{}".format(
-        sysconfig.get_config_var("LIBDIR"),
-        sysconfig.get_config_var("INSTSONAME"))
 cmake_python_include_dir = sysconfig.get_path("include")
 
 
@@ -399,7 +385,7 @@ def build_deps():
     check_pydep('yaml', 'pyyaml')
 
     build_caffe2(version=version,
-                 cmake_python_library=cmake_python_library,
+                 cmake_python_library=None,
                  build_python=True,
                  rerun_cmake=RERUN_CMAKE,
                  cmake_only=CMAKE_ONLY,

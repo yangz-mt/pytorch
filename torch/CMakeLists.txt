@@ -94,16 +94,16 @@ set(TORCH_PYTHON_PUBLIC_COMPILE_DEFINITIONS)
 
 set(TORCH_PYTHON_COMPILE_OPTIONS)
 
-set(TORCH_PYTHON_LINK_FLAGS "")
+set(TORCH_PYTHON_LINK_FLAGS)
 
 if(MSVC)
-    string(APPEND TORCH_PYTHON_LINK_FLAGS " /NODEFAULTLIB:LIBCMT.LIB")
+    list(APPEND TORCH_PYTHON_LINK_FLAGS /NODEFAULTLIB:LIBCMT.LIB)
     list(APPEND TORCH_PYTHON_LINK_LIBRARIES onnx_library)
     if(NOT CMAKE_BUILD_TYPE MATCHES "Release")
-      string(APPEND TORCH_PYTHON_LINK_FLAGS " /DEBUG:FULL")
+      list(APPEND TORCH_PYTHON_LINK_FLAGS /DEBUG:FULL)
     endif()
 elseif(APPLE)
-    string(APPEND TORCH_PYTHON_LINK_FLAGS " -undefined dynamic_lookup")
+    list(APPEND TORCH_PYTHON_LINK_FLAGS -undefined dynamic_lookup)
 else()
     list(APPEND TORCH_PYTHON_COMPILE_OPTIONS
       -fno-strict-aliasing
@@ -351,7 +351,7 @@ target_compile_definitions(torch_python PRIVATE ${TORCH_PYTHON_COMPILE_DEFINITIO
 
 target_compile_definitions(torch_python PUBLIC ${TORCH_PYTHON_PUBLIC_COMPILE_DEFINITIONS})
 
-target_compile_options(torch_python PRIVATE ${TORCH_PYTHON_COMPILE_OPTIONS})
+target_compile_options(torch_python PUBLIC ${TORCH_PYTHON_COMPILE_OPTIONS})
 
 target_include_directories(torch_python PUBLIC ${TORCH_PYTHON_INCLUDE_DIRECTORIES})
 
@@ -365,8 +365,8 @@ if(BUILD_ONEDNN_GRAPH)
   target_compile_definitions(torch_cpu PRIVATE "-DBUILD_ONEDNN_GRAPH")
 endif()
 
-if(NOT TORCH_PYTHON_LINK_FLAGS STREQUAL "")
-  target_link_options(torch_python PRIVATE ${TORCH_PYTHON_LINK_FLAGS})
+if(TORCH_PYTHON_LINK_FLAGS)
+  target_link_options(torch_python PUBLIC ${TORCH_PYTHON_LINK_FLAGS})
 endif()
 
 install(TARGETS torch_python DESTINATION "${TORCH_INSTALL_LIB_DIR}")

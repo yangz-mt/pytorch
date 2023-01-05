@@ -13,7 +13,6 @@ from typing import Any, cast, Dict, List, Optional
 from . import which
 from .cmake_utils import CMakeValue, get_cmake_cache_variables_from_file
 from .env import BUILD_DIR, check_negative_env_flag, IS_64BIT, IS_DARWIN, IS_WINDOWS
-from .numpy_ import NUMPY_INCLUDE_DIR, USE_NUMPY
 
 
 def _mkdir_p(d: str) -> None:
@@ -57,14 +56,14 @@ class CMake:
         cmake3_version = CMake._get_version(which("cmake3"))
         cmake_version = CMake._get_version(which("cmake"))
 
-        _cmake_min_version = LooseVersion("3.13.0")
+        _cmake_min_version = LooseVersion("3.18.0")
         if all(
             (
                 ver is None or ver < _cmake_min_version
                 for ver in [cmake_version, cmake3_version]
             )
         ):
-            raise RuntimeError("no cmake or cmake3 with version >= 3.13.0 found")
+            raise RuntimeError("no cmake or cmake3 with version >= 3.18.0 found")
 
         if cmake3_version is None:
             cmake_command = "cmake"
@@ -119,7 +118,6 @@ class CMake:
     def generate(
         self,
         version: Optional[str],
-        cmake_python_library: Optional[str],
         build_python: bool,
         build_test: bool,
         my_env: Dict[str, str],
@@ -283,9 +281,7 @@ class CMake:
                 # are automatically passed to CMake; For other options you can add to additional_options above.
                 "BUILD_PYTHON": build_python,
                 "BUILD_TEST": build_test,
-                # Most library detection should go to CMake script, except this one, which Python can do a much better job
-                # due to NumPy's inherent Pythonic nature.
-                "USE_NUMPY": USE_NUMPY,
+                "USE_NUMPY": not check_negative_env_flag("USE_NUMPY"),
             }
         )
 
@@ -308,10 +304,7 @@ class CMake:
         CMake.defines(
             args,
             PYTHON_EXECUTABLE=sys.executable,
-            PYTHON_LIBRARY=cmake_python_library,
-            PYTHON_INCLUDE_DIR=sysconfig.get_path("include"),
             TORCH_BUILD_VERSION=version,
-            NUMPY_INCLUDE_DIR=NUMPY_INCLUDE_DIR,
             **build_options,
         )
 
