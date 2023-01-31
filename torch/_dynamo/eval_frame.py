@@ -379,9 +379,10 @@ def lookup_backend(compiler_fn):
                     )
             else:
                 from importlib.metadata import entry_points
+            backend_name = compiler_fn
             backend_eps = entry_points(group="torch_dynamo_backends")
-            if len(backend_eps) > 0:
-                compiler_fn = backend_eps[compiler_fn].load()
+            if backend_name in backend_eps.names:
+                compiler_fn = backend_eps[backend_name].load()
             else:
                 raise RuntimeError("Cannot recognize backend: {}".format(compiler_fn))
 
