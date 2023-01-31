@@ -374,16 +374,16 @@ def lookup_backend(compiler_fn):
                     from importlib_metadata import entry_points
                 except ImportError:
                     raise RuntimeError(
-                        'For Python < 3.10, please install importlib-metadata via\n'
-                        '  pip3 install importlib-metadata'
+                        "For Python < 3.10, please install importlib-metadata via\n"
+                        "  pip3 install importlib-metadata"
                     )
             else:
                 from importlib.metadata import entry_points
-            backend_eps = entry_points(group='torch_dynamo_backends')
+            backend_eps = entry_points(group="torch_dynamo_backends")
             if len(backend_eps) > 0:
                 compiler_fn = backend_eps[compiler_fn].load()
             else:
-                raise RuntimeError('Cannot recognize backend: {}'.format(compiler_fn))
+                raise RuntimeError("Cannot recognize backend: {}".format(compiler_fn))
 
     return compiler_fn
 
