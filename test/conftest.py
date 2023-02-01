@@ -11,6 +11,7 @@ from typing import Optional
 import xml.etree.ElementTree as ET
 import functools
 import pytest
+import sys
 
 # a lot of this file is copied from _pytest.junitxml and modified to get rerun info
 
@@ -167,3 +168,8 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
                     terminalreporter._outrep_summary(rep)
                     terminalreporter._handle_teardown_sections(rep.nodeid)
     yield
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_pycollect_makemodule(path, parent):
+    yield
+    return sys.modules['__main__'] # noqa
