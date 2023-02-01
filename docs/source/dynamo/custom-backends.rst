@@ -83,7 +83,7 @@ To add your backend, you could add your backend function to the ``torch_dynamo_b
 Please replace the ``my_compiler`` before ``=`` to the name of your backend's name and replace the part after ``=`` to
 the module and function name of your backend function.
 The entry point will be added to your python enviroment after the installation of the package.
-When you call ``torch.compile(model, backend="my_compiler")``, PyTorch would first search the backend named "my_backend"
+When you call ``torch.compile(model, backend="my_compiler")``, PyTorch would first search the backend named "my_compiler"
 that has been registered with ``register_backend``. If not found, it will continue to search in all backends registered
 via ``entry_points``.
 
