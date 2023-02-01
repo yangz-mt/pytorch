@@ -1099,7 +1099,7 @@ class CompileProfiler:
 @functools.lru_cache(None)
 def _get_debug_dir(root_dir):
     dir_name = "run_" + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S_%f")
-    return os.path.join(root_dir, dir_name)
+    return os.path.join(root_dir, dir_name, "pid_" + str(os.getpid()))
 
 
 def get_debug_dir():
