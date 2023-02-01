@@ -58,6 +58,35 @@ Registration serves two purposes:
 * It is required for use with the `minifier <https://pytorch.org/docs/master/dynamo/troubleshooting.html>`__. Any generated
   code from the minifier must call your code that registers your backend function, typically through an ``import`` statement.
 
+Besides the ``register_backend`` decorator, if your backend is in another python package, you could also register your
+backend through entry points of python package, which provides a way for a package to reigster a plugin for another one.
+
+.. hint::
+
+    You can learn more about ``entry_points`` in the
+    `python packaging documentation <https://setuptools.pypa.io/en/latest/userguide/entry_point.html>`__.
+
+To add your backend, you could add your backend function to the ``torch_dynamo_backend`` entry point group in the
+``setup.py`` file of your package:
+
+.. code-block:: python
+
+    ...
+    setup(
+        ...
+        'torch_dynamo_backends': [
+            'my_compiler = your_module.submodule:my_compiler',
+        ]
+        ...
+    )
+
+Please replace the ``my_compiler`` before ``=`` to the name of your backend's name and replace the part after ``=`` to
+the module and function name of your backend function.
+The entry point will be added to your python enviroment after the installation of the package.
+When you call ``torch.compile(model, backend="my_compiler")``, PyTorch would first search the backend named "my_backend"
+that has been registered with ``register_backend``. If not found, it will continue to search in all backends registered
+via ``entry_points``.
+
 Custom Backends after AOTAutograd
 ---------------------------------
 
