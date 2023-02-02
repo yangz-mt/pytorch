@@ -66,7 +66,7 @@ backend through entry points of python package, which provides a way for a packa
     You can learn more about ``entry_points`` in the
     `python packaging documentation <https://setuptools.pypa.io/en/latest/userguide/entry_point.html>`__.
 
-To add your backend, you could add your backend function to the ``torch_dynamo_backend`` entry point group in the
+To add your backend, you could add your backend function to the ``torch_dynamo_backends`` entry point group in the
 ``setup.py`` file of your package:
 
 .. code-block:: python
