@@ -12,6 +12,7 @@ import warnings
 from enum import Enum
 from typing import Optional, Tuple, TYPE_CHECKING, Union
 from unittest.mock import patch
+from importlib.metadata import entry_points
 
 import torch
 import torch.utils._pytree as pytree
@@ -364,27 +365,23 @@ def lookup_backend(compiler_fn):
     if isinstance(compiler_fn, str):
         from .optimizations import BACKENDS
 
-        if compiler_fn in BACKENDS:
-            compiler_fn = BACKENDS[compiler_fn]
-        else:
-            # See https://packaging.python.org/en/latest/guides/creating-and-discovering-plugins/#using-package-metadata
-            # for more information on using entry_points to provide plugins for python packages.
+        backend_name = compiler_fn
+        if backend_name not in BACKENDS:
+            compiler_fn = None
             if sys.version_info < (3, 10):
-                try:
-                    from importlib_metadata import entry_points
-                except ImportError:
-                    raise RuntimeError(
-                        "For Python < 3.10, please install importlib-metadata via\n"
-                        "  pip3 install importlib-metadata"
-                    )
+                backend_eps = entry_points()
+                selected_eps = [ep for ep in backend_eps['torch_dynamo_backends'] if ep.name == backend_name]
+                if len(selected_eps) > 0:
+                    compiler_fn = selected_eps[0].load()
             else:
-                from importlib.metadata import entry_points
-            backend_name = compiler_fn
-            backend_eps = entry_points(group="torch_dynamo_backends")
-            if backend_name in backend_eps.names:
-                compiler_fn = backend_eps[backend_name].load()
-            else:
-                raise RuntimeError("Cannot recognize backend: {}".format(compiler_fn))
+                backend_eps = entry_points(group="torch_dynamo_backends")
+                if backend_name in backend_eps.names:
+                    compiler_fn = backend_eps[backend_name].load()
+            if compiler_fn is None:
+                raise RuntimeError("Cannot recognize backend: {}".format(backend_name))
+            BACKENDS[backend_name] = compiler_fn
+
+        compiler_fn = BACKENDS[backend_name]
 
     return compiler_fn
 
