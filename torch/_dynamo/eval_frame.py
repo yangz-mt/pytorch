@@ -10,9 +10,9 @@ import traceback
 import types
 import warnings
 from enum import Enum
+from importlib.metadata import entry_points
 from typing import Optional, Tuple, TYPE_CHECKING, Union
 from unittest.mock import patch
-from importlib.metadata import entry_points
 
 import torch
 import torch.utils._pytree as pytree
@@ -368,13 +368,14 @@ def lookup_backend(compiler_fn):
         backend_name = compiler_fn
         if backend_name not in BACKENDS:
             compiler_fn = None
+            group_name = "torch_dynamo_backends"
             if sys.version_info < (3, 10):
                 backend_eps = entry_points()
-                selected_eps = [ep for ep in backend_eps['torch_dynamo_backends'] if ep.name == backend_name]
-                if len(selected_eps) > 0:
-                    compiler_fn = selected_eps[0].load()
+                eps = [ep for ep in backend_eps[group_name] if ep.name == backend_name]
+                if len(eps) > 0:
+                    compiler_fn = eps[0].load()
             else:
-                backend_eps = entry_points(group="torch_dynamo_backends")
+                backend_eps = entry_points(group=group_name)
                 if backend_name in backend_eps.names:
                     compiler_fn = backend_eps[backend_name].load()
             if compiler_fn is None:
