@@ -26,14 +26,6 @@ def has_ipex():
         return False
 
 
-def has_functorch():
-    try:
-        importlib.import_module("functorch")
-        return True
-    except ImportError:
-        return False
-
-
 class Seq(torch.nn.Module):
     def __init__(self):
         super().__init__()
@@ -142,8 +134,8 @@ class TestOptimizations(torch._dynamo.test_case.TestCase):
         self.assertEqual(r2.dtype, torch.bfloat16)
 
     def _check_backend_works(self, backend):
-        model = Conv_Bn_Relu(3, 32, kernel_size=3, stride=1).eval()
-        input = torch.randn(8, 3, 64, 64)
+        model = Seq().eval()
+        input = torch.randn(2, 10)
         r1 = model(input)
         r2 = torch.compile(model, backend=backend)(input)
         self.assertTrue(same(r1, r2.float(), tol=0.01))
@@ -154,9 +146,29 @@ class TestOptimizations(torch._dynamo.test_case.TestCase):
     def test_torchscript(self):
         self._check_backend_works("ts")
 
+    def test_aot_eager(self):
+        self._check_backend_works("aot_eager")
+
+    def test_aot_eager_decomp_partition(self):
+        self._check_backend_works("aot_eager_decomp_partition")
+
+    def test_aot_cudagraphs(self):
+        self._check_backend_works("aot_cudagraphs")
+
+    def test_aot_ts(self):
+        self._check_backend_works("aot_ts")
+
+    def test_aot_ts_nvfuser(self):
+        self._check_backend_works("aot_ts_nvfuser")
+
+    def test_nvprims_nvfuser(self):
+        self._check_backend_works("nvprims_nvfuser")
+
+    def test_nvprims_aten(self):
+        self._check_backend_works("nvprims_aten")
+
 
 class NormalizeIRTests(torch._dynamo.test_case.TestCase):
-    @unittest.skipIf(not has_functorch(), "requires functorch")
     def test_inplace_normalize(self):
         def fn(a, b):
             x = torch.cos(a)
